@@ -1,0 +1,36 @@
+name: Deploy EC2
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  Deploy:
+    name: Implantação AWS
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deploy via SSH na EC2
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+
+          script: |
+            docker pull gabesant/minha-api-github-actions:latest
+
+            docker stop minha-api 2>/dev/null || true
+            docker rm minha-api 2>/dev/null || true
+
+            docker run -d \
+              --name minha-api \
+              --restart unless-stopped \
+              -p 8080:8080 \
+              gabesant/minha-api-github-actions:latest
+
+            sleep 5
+
+            curl -f http://localhost:8080/health || exit 1
+
+            docker image prune -f
