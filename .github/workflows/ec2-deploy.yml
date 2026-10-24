@@ -1,11 +1,14 @@
 name: Deploy EC2
 
 on:
-  push:
-    branches: [main]
+  workflow_run:
+    workflows: ["Builds and Tests"]
+    types:
+      - completed
 
 jobs:
   Deploy:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     name: Implantação AWS
     runs-on: ubuntu-latest
 
