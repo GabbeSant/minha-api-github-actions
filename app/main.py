@@ -10,7 +10,7 @@ async def root():
     return {"status": "ok", "message": "API rodando!"}
 @app.get("/health")
 async def health():
-    return {"status": "healthy-v3"}
+    return {"status": "healthy-v4"}
 @app.post("/items")
 async def create_item(item: Item):
     return {"created": item}
