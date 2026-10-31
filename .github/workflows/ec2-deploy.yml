@@ -1,3 +1,4 @@
+
 name: Deploy EC2
 
 on:
@@ -8,9 +9,19 @@ on:
 
 jobs:
   Deploy:
-    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      (
+        github.event.workflow_run.head_branch == 'develop' ||
+        github.event.workflow_run.head_branch == 'main'
+      )
+
     name: Implantação AWS
     runs-on: ubuntu-latest
+
+    environment:
+      name: ${{ github.event.workflow_run.head_branch == 'develop' && 'homologacao' || 'producao' }}
 
     steps:
       - name: Deploy via SSH na EC2
@@ -21,7 +32,7 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
 
           script: |
-            docker pull gabesant/minha-api-github-actions:latest
+            docker pull gabesant/minha-api-github-actions:${{ github.event.workflow_run.head_sha }}
 
             docker stop minha-api 2>/dev/null || true
             docker rm minha-api 2>/dev/null || true
@@ -30,7 +41,7 @@ jobs:
               --name minha-api \
               --restart unless-stopped \
               -p 8080:8080 \
-              gabesant/minha-api-github-actions:latest
+              gabesant/minha-api-github-actions:${{ github.event.workflow_run.head_sha }}
 
             sleep 5
 
